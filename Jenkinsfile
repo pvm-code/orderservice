@@ -58,11 +58,7 @@ pipeline {
         sshagent(credentials: ['k8s-server-ssh-key']) {
             sh """
                 ssh -o StrictHostKeyChecking=no ec2-user@${K8S_SERVER} '
-                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-configmap.yaml
-                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-secret.yaml
-                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-service.yaml
-                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-deployment.yaml
-
+                    
                     sudo kubectl set image deployment/order-service \
                     order-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
 
