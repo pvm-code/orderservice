@@ -53,19 +53,25 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
-                sshagent(credentials: ['k8s-server-ssh-key']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ec2-user@${K8S_SERVER} '
-                            sudo kubectl set image deployment/order-service order-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+      stage('Deploy to Kubernetes') {
+    steps {
+        sshagent(credentials: ['k8s-server-ssh-key']) {
+            sh """
+                ssh -o StrictHostKeyChecking=no ec2-user@${K8S_SERVER} '
+                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-configmap.yaml
+                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-secret.yaml
+                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-service.yaml
+                    sudo kubectl apply -f /home/ec2-user/k8s/order-service/order-deployment.yaml
 
-                            sudo kubectl rollout status deployment/order-service
-                        '
-                    """
-                }
-            }
+                    sudo kubectl set image deployment/order-service \
+                    order-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+
+                    sudo kubectl rollout status deployment/order-service
+                '
+            """
         }
+    }
+}
     }
 
     post {
