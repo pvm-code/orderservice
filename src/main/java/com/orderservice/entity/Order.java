@@ -20,7 +20,7 @@ public class Order {
 	
 	@Id
 	@Column(name = "id", nullable = false,updatable = false)
-	private UUID id;
+	private UUID id = UUID.randomUUID();
 	
 	@Column(name = "user_id", nullable = false)
 	private Long userId;
