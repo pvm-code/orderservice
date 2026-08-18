@@ -19,7 +19,7 @@ public class OrderItem {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	private UUID uuid;
+	private UUID id;
 
 	@ManyToOne(fetch = FetchType.LAZY,optional = false)
 	@JoinColumn(name = "order_id",nullable = false)
@@ -40,10 +40,10 @@ public class OrderItem {
 	@Column(name = "subtotal",nullable = false,precision = 19,scale = 2)
 	private BigDecimal subtotal;
 
-	public OrderItem(UUID uuid, Order order, Long productId, String productName, Integer quantity, BigDecimal unitPrice,
+	public OrderItem(UUID id, Order order, Long productId, String productName, Integer quantity, BigDecimal unitPrice,
 			BigDecimal subtotal) {
 		super();
-		this.uuid = uuid;
+		this.id = id;
 		this.order = order;
 		this.productId = productId;
 		this.productName = productName;
@@ -57,11 +57,11 @@ public class OrderItem {
 	}
 
 	public UUID getUuid() {
-		return uuid;
+		return id;
 	}
 
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
+	public void setUuid(UUID id) {
+		this.id = id;
 	}
 
 	public Order getOrder() {
