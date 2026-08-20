@@ -7,9 +7,9 @@ public class OrderItemResponse {
 	
 	private UUID id;
 	
-	private Long productId;
+	private UUID productId;
 	
-	private String ProductName;
+	private String productName;
 	
 	private Integer quantity;
 	
@@ -25,20 +25,20 @@ public class OrderItemResponse {
 		this.id = id;
 	}
 
-	public Long getProductId() {
+	public UUID getProductId() {
 		return productId;
 	}
 
-	public void setProductId(Long productId) {
+	public void setProductId(UUID productId) {
 		this.productId = productId;
 	}
 
 	public String getProductName() {
-		return ProductName;
+		return productName;
 	}
 
 	public void setProductName(String productName) {
-		ProductName = productName;
+		productName = productName;
 	}
 
 	public Integer getQuantity() {

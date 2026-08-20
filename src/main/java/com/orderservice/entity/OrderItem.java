@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "order_items")
@@ -26,7 +27,7 @@ public class OrderItem {
 	private Order order;
 	
 	@Column(name = "product_id",nullable = false)
-	private Long productId;
+	private @NotNull UUID productId;
 	
 	@Column(name = "product_name" ,nullable = false)
 	private String productName;
@@ -40,7 +41,7 @@ public class OrderItem {
 	@Column(name = "subtotal",nullable = false,precision = 19,scale = 2)
 	private BigDecimal subtotal;
 
-	public OrderItem(UUID id, Order order, Long productId, String productName, Integer quantity, BigDecimal unitPrice,
+	public OrderItem(UUID id, Order order, @NotNull UUID productId, String productName, Integer quantity, BigDecimal unitPrice,
 			BigDecimal subtotal) {
 		super();
 		this.id = id;
@@ -72,12 +73,12 @@ public class OrderItem {
 		this.order = order;
 	}
 
-	public Long getProductId() {
+	public @NotNull UUID getProductId() {
 		return productId;
 	}
 
-	public void setProductId(Long productId) {
-		this.productId = productId;
+	public void setProductId(@NotNull UUID uuid) {
+		this.productId = uuid;
 	}
 
 	public String getProductName() {

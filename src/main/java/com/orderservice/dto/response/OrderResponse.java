@@ -5,12 +5,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotNull;
+
 public class OrderResponse {
 	
 	
 	private UUID id;
 	
-	private Long userId;
+	private @NotNull UUID userId;
 	
 	private String status;
 	
@@ -30,12 +32,12 @@ public class OrderResponse {
 		this.id = id;
 	}
 
-	public Long getUserId() {
+	public @NotNull UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public void setUserId(@NotNull UUID uuid) {
+		this.userId = uuid;
 	}
 
 	public String getStatus() {

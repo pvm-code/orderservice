@@ -1,22 +1,24 @@
 package com.orderservice.dto.request;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public class CreateOrderItemRequest {
 	
 	@NotNull
-	private Long productId;
+	private UUID productId;
 	
 	@NotNull
 	@Positive
 	private Integer quantity;
 
-	public Long getProductId() {
+	public @NotNull UUID getProductId() {
 		return productId;
 	}
 
-	public void setProductId(Long productId) {
+	public void setProductId(@NotNull UUID productId) {
 		this.productId = productId;
 	}
 

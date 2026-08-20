@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "orders")
@@ -26,7 +27,7 @@ public class Order {
 	private UUID id = UUID.randomUUID();
 	
 	@Column(name = "user_id", nullable = false)
-	private Long userId;
+	private @NotNull UUID userId;
 	
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
@@ -70,12 +71,12 @@ public class Order {
 
 	
 
-	public Long getUserId() {
+	public @NotNull UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public void setUserId(@NotNull UUID uuid) {
+		this.userId = uuid;
 	}
 
 	public OrderStatus getStatus() {

@@ -1,18 +1,26 @@
 package com.orderservice.dto.request;
 
 import java.util.List;
+import java.util.UUID;
 
-public class CreateOrderReqeust {
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+
+public class CreateOrderRequest {
 	
-	private Long userId;
+	@NotNull
+	private UUID userId;
 	
+	@NotEmpty
+	@Valid
 	private List<CreateOrderItemRequest> items;
 
-	public Long getUserId() {
+	public @NotNull UUID getUserId() {
 		return userId;
 	}
 
-	public void setUserId(Long userId) {
+	public void setUserId(@NotNull UUID userId) {
 		this.userId = userId;
 	}
 
