@@ -1,11 +1,9 @@
 package com.orderservice.service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.UUID;
 
-import javax.naming.InsufficientResourcesException;
-
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.orderservice.client.ProductClient;
@@ -29,6 +27,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     
     private final ProductClient productClient;
+    
 
     
 
@@ -38,6 +37,7 @@ public class OrderService {
 		this.productClient = productClient;
 	}
 
+    
 	public OrderResponse createOrder(CreateOrderRequest request,UUID userId)  {
     	
     	Order order = new Order();
@@ -98,17 +98,21 @@ public class OrderService {
      
     }
 
-    public OrderResponse getOrder(UUID id,UUID userId) {
+    public OrderResponse getOrder(UUID id,UUID userId,boolean isAdmin) {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
                         new OrderNotFoundException(
                                 "Order not found with id: " + id
                         ));
-        if(!order.getUserId().equals(userId)) {
-        	throw new OrderNotFoundException(
+        System.out.println("CURRENT USER ID = " + userId);
+        System.out.println("IS ADMIN = " + isAdmin);
+        System.out.println("ORDER USER ID = " + order.getUserId());
+
+        if(!isAdmin && !order.getUserId().equals(userId)) {
+        	throw new AccessDeniedException(
         			
-        			"Order not found with id:" + id
+        			"you do not have permission to access this order"
         			);
         	
         }

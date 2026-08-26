@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,8 @@ import com.orderservice.dto.client.ProductClientResponse;
 import com.orderservice.dto.request.CreateOrderRequest;
 import com.orderservice.dto.response.ApiResponse;
 import com.orderservice.dto.response.OrderResponse;
+import com.orderservice.security.AuthenticatedUser;
+import com.orderservice.security.CurrentUser;
 import com.orderservice.service.OrderService;
 
 import jakarta.validation.Valid;
@@ -29,32 +32,33 @@ import jakarta.validation.Valid;
 @RequestMapping("api/v1/order")
 public class OrderController {
 	
-	private final OrderserviceApplication orderserviceApplication;
 
-	private final ProductClient productClient;
 	
 	private final OrderService orderService;
 	
+    private final CurrentUser currentUser;
+
+	
 	public OrderController(
 	        OrderService orderService,
-	        ProductClient productClient, OrderserviceApplication orderserviceApplication) {
+	        ProductClient productClient, OrderserviceApplication orderserviceApplication,CurrentUser currentUser) {
 
 	    this.orderService = orderService;
-	    this.productClient = productClient;
-		this.orderserviceApplication = orderserviceApplication;
+		this.currentUser = currentUser;
+
 	}
 
 	@PostMapping
 	public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
 			@Valid @RequestBody CreateOrderRequest request,
-			@AuthenticationPrincipal Jwt jwt){
-		
-		UUID userId = UUID.fromString(
-	            jwt.getClaimAsString("userId")
-	    );
+			Authentication authentication){
 		
 		
-		OrderResponse order =orderService.createOrder(request,userId);
+		
+		AuthenticatedUser user = currentUser.get(authentication);
+
+		
+		OrderResponse order =orderService.createOrder(request,user.getUserId());
 		
 		ApiResponse<OrderResponse> response = new ApiResponse<>(
 				
@@ -70,27 +74,17 @@ public class OrderController {
 		
 	}
 	
-	@GetMapping("/welcome")
-	public ResponseEntity<String> welcome(
-	        @AuthenticationPrincipal Jwt jwt) {
 
-	    String userId = jwt.getClaimAsString("userId");
-
-	    return ResponseEntity.ok(
-	            "User ID: " + userId
-	    );
-	}
 	
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<OrderResponse>> getOrder(
 	        @PathVariable UUID id,
-	        @AuthenticationPrincipal Jwt jwt) {
+	        Authentication authentication) {
 
-	    UUID userId = UUID.fromString(
-	            jwt.getClaimAsString("userId")
-	    );
+		 AuthenticatedUser user =
+	                currentUser.get(authentication);
 
-	    OrderResponse order = orderService.getOrder(id, userId);
+	    OrderResponse order = orderService.getOrder(id, user.getUserId(),user.isAdmin());
 
 	    ApiResponse<OrderResponse> response = new ApiResponse<>(
 	            true,
