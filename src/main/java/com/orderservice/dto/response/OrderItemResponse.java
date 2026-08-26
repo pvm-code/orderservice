@@ -37,8 +37,10 @@ public class OrderItemResponse {
 		return productName;
 	}
 
+	
+
 	public void setProductName(String productName) {
-		productName = productName;
+		this.productName = productName;
 	}
 
 	public Integer getQuantity() {

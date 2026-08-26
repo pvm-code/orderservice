@@ -4,62 +4,102 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import javax.naming.InsufficientResourcesException;
+
 import org.springframework.stereotype.Service;
 
+import com.orderservice.client.ProductClient;
+import com.orderservice.dto.client.ProductClientResponse;
+import com.orderservice.dto.client.ProductData;
+import com.orderservice.dto.request.CreateOrderItemRequest;
 import com.orderservice.dto.request.CreateOrderRequest;
 import com.orderservice.dto.response.OrderItemResponse;
 import com.orderservice.dto.response.OrderResponse;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
+import com.orderservice.entity.OrderStatus;
+import com.orderservice.exception.InsufficientStockException;
 import com.orderservice.exception.OrderNotFoundException;
+import com.orderservice.exception.ProductServiceException;
 import com.orderservice.repository.OrderRepository;
 
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    
+    private final ProductClient productClient;
 
-    public OrderService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
+    
 
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public OrderService(OrderRepository orderRepository, ProductClient productClient) {
+		super();
+		this.orderRepository = orderRepository;
+		this.productClient = productClient;
+	}
+
+	public OrderResponse createOrder(CreateOrderRequest request)  {
     	
     	Order order = new Order();
-    	order.setUserId(request.getUserId());
     	
-    	order.setOrderItems(new ArrayList<>());
+    	order.setUserId(request.getUserId());
+    	order.setStatus(OrderStatus.PENDING);
+    	
+    	 //order.setOrderItems(new ArrayList<>());
     	
     	BigDecimal totalAmount= BigDecimal.ZERO;
     	
     	
-    	for(var itemRequest : request.getItems()) {
+    	for(CreateOrderItemRequest itemRequest : request.getItems()) {
+    		
+    		ProductClientResponse productResponse = 
+    				productClient.getProduct(itemRequest.getProductId());
     		
     		
-    		OrderItem item = new OrderItem();
+    		if(!productResponse.isSuccess() || productResponse.getData() == null) {
+    			
+    			
+    			throw new ProductServiceException("unable to fetch product:"+itemRequest.getProductId());
+    		}
     		
-    		item.setOrder(order);
-    		item.setProductId(itemRequest.getProductId());
+    	ProductData product = productResponse.getData();
+    	System.out.println("PRODUCT FROM PRODUCT SERVICE:");
+    	System.out.println("ID: " + product.getId());
+    	System.out.println("NAME: " + product.getName());
+    	System.out.println("PRICE: " + product.getPrice());
+    	System.out.println("STOCK: " + product.getStock());
+    	if(itemRequest.getQuantity() > product.getStock()) {
     		
-    		/*
-    		 * product name and price will add from product service 
-    		 * next service to service comm code
-    		 * 
-    		 */
-    		
-    		item.setQuantity(itemRequest.getQuantity());
-    		
-    		order.getOrderItems().add(item);
-    		
-    		
-    	}
+
+            throw new InsufficientStockException(
+                    "Insufficient stock for product: "
+                    + product.getName()
+                    + ". Available: "
+                    + product.getStock()
+                    + ", requested: "
+                    + itemRequest.getQuantity()
+            );    	}
+    	
+    	BigDecimal subtotal= product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+    	
+    	OrderItem orderItem = new OrderItem();
+    	
+    	orderItem.setProductId(product.getId());
+    	orderItem.setProductName(product.getName());
+        orderItem.setQuantity(itemRequest.getQuantity());
+        orderItem.setUnitPrice(product.getPrice());
+        orderItem.setSubtotal(subtotal);
+        
+        order.addOrderItem(orderItem);
+        totalAmount = totalAmount.add(subtotal);
+    	
+     
+    }
+    	
     	order.setTotalAmount(totalAmount);
     	Order savedOrder = orderRepository.save(order);
     	
     	return mapToResponse(savedOrder);
-    	
-    	
-    	
      
     }
 
