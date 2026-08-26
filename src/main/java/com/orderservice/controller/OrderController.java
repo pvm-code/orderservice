@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,10 +45,16 @@ public class OrderController {
 	}
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<OrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request){
+	public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
+			@Valid @RequestBody CreateOrderRequest request,
+			@AuthenticationPrincipal Jwt jwt){
+		
+		UUID userId = UUID.fromString(
+	            jwt.getClaimAsString("userId")
+	    );
 		
 		
-		OrderResponse order =orderService.createOrder(request);
+		OrderResponse order =orderService.createOrder(request,userId);
 		
 		ApiResponse<OrderResponse> response = new ApiResponse<>(
 				
@@ -62,6 +70,36 @@ public class OrderController {
 		
 	}
 	
+	@GetMapping("/welcome")
+	public ResponseEntity<String> welcome(
+	        @AuthenticationPrincipal Jwt jwt) {
+
+	    String userId = jwt.getClaimAsString("userId");
+
+	    return ResponseEntity.ok(
+	            "User ID: " + userId
+	    );
+	}
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<ApiResponse<OrderResponse>> getOrder(
+	        @PathVariable UUID id,
+	        @AuthenticationPrincipal Jwt jwt) {
+
+	    UUID userId = UUID.fromString(
+	            jwt.getClaimAsString("userId")
+	    );
+
+	    OrderResponse order = orderService.getOrder(id, userId);
+
+	    ApiResponse<OrderResponse> response = new ApiResponse<>(
+	            true,
+	            "Order fetched successfully",
+	            order
+	    );
+
+	    return ResponseEntity.ok(response);
+	}
 	
 	
 }

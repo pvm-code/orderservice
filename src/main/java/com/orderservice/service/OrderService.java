@@ -38,11 +38,10 @@ public class OrderService {
 		this.productClient = productClient;
 	}
 
-	public OrderResponse createOrder(CreateOrderRequest request)  {
+	public OrderResponse createOrder(CreateOrderRequest request,UUID userId)  {
     	
     	Order order = new Order();
-    	
-    	order.setUserId(request.getUserId());
+    	order.setUserId(userId);
     	order.setStatus(OrderStatus.PENDING);
     	
     	 //order.setOrderItems(new ArrayList<>());
@@ -63,11 +62,7 @@ public class OrderService {
     		}
     		
     	ProductData product = productResponse.getData();
-    	System.out.println("PRODUCT FROM PRODUCT SERVICE:");
-    	System.out.println("ID: " + product.getId());
-    	System.out.println("NAME: " + product.getName());
-    	System.out.println("PRICE: " + product.getPrice());
-    	System.out.println("STOCK: " + product.getStock());
+    	
     	if(itemRequest.getQuantity() > product.getStock()) {
     		
 
@@ -103,16 +98,26 @@ public class OrderService {
      
     }
 
-    public OrderResponse getOrder(UUID id) {
+    public OrderResponse getOrder(UUID id,UUID userId) {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
                         new OrderNotFoundException(
                                 "Order not found with id: " + id
                         ));
+        if(!order.getUserId().equals(userId)) {
+        	throw new OrderNotFoundException(
+        			
+        			"Order not found with id:" + id
+        			);
+        	
+        }
 
         return mapToResponse(order);
     }
+    
+    
+    
     private OrderResponse mapToResponse(Order order) {
 
         OrderResponse response = new OrderResponse();
