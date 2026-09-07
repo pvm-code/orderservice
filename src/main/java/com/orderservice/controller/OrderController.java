@@ -58,7 +58,7 @@ public class OrderController {
 		AuthenticatedUser user = currentUser.get(authentication);
 
 		
-		OrderResponse order =orderService.createOrder(request,user.getUserId());
+		OrderResponse order =orderService.createOrder(request,user.getUserId(),user.getEmail());
 		
 		ApiResponse<OrderResponse> response = new ApiResponse<>(
 				

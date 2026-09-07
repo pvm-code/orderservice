@@ -19,6 +19,8 @@ import com.orderservice.entity.OrderStatus;
 import com.orderservice.exception.InsufficientStockException;
 import com.orderservice.exception.OrderNotFoundException;
 import com.orderservice.exception.ProductServiceException;
+import com.orderservice.kafka.event.OrderCreatedEvent;
+import com.orderservice.kafka.producer.OrderEventProducer;
 import com.orderservice.repository.OrderRepository;
 
 @Service
@@ -28,17 +30,20 @@ public class OrderService {
     
     private final ProductClient productClient;
     
+    private final OrderEventProducer orderEventProducer;
+    
 
     
 
-    public OrderService(OrderRepository orderRepository, ProductClient productClient) {
+    public OrderService(OrderRepository orderRepository, ProductClient productClient, OrderEventProducer orderEventProducer) {
 		super();
 		this.orderRepository = orderRepository;
 		this.productClient = productClient;
+		this.orderEventProducer = orderEventProducer;
 	}
 
     
-	public OrderResponse createOrder(CreateOrderRequest request,UUID userId)  {
+	public OrderResponse createOrder(CreateOrderRequest request,UUID userId,String email)  {
     	
     	Order order = new Order();
     	order.setUserId(userId);
@@ -93,6 +98,16 @@ public class OrderService {
     	
     	order.setTotalAmount(totalAmount);
     	Order savedOrder = orderRepository.save(order);
+    	
+    	OrderCreatedEvent event = new OrderCreatedEvent(
+    			
+    			savedOrder.getId(),
+    			savedOrder.getUserId(),
+    			savedOrder.getTotalAmount(),
+    			email
+    			
+    			);
+    	orderEventProducer.publishOrderCreated(event);
     	
     	return mapToResponse(savedOrder);
      

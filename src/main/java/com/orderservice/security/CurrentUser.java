@@ -22,13 +22,19 @@ public class CurrentUser {
                 .getToken()
                 .getClaimAsString("role");
         
+        
+        String email = jwtAuthentication
+        		.getToken()
+        		.getClaimAsString("sub");
+        
 
         System.out.println("JWT USER ID = " + userId);
         System.out.println("JWT ROLE = " + role);
 
         return new AuthenticatedUser(
                 UUID.fromString(userId),
-                role
+                role,
+                email
         );
     }
 }
