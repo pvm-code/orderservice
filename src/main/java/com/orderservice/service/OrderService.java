@@ -165,7 +165,26 @@ public class OrderService {
     	
     	
     }
-    
+    public OrderResponse confirmOrder(UUID id) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + id
+                        ));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING orders can be confirmed"
+            );
+        }
+
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        Order savedOrder = orderRepository.save(order);
+
+        return mapToResponse(savedOrder);
+    }
     
     
     private OrderResponse mapToResponse(Order order) {

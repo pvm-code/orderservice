@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -98,7 +99,30 @@ public class OrderController {
 
 	    return ResponseEntity.ok(response);
 	}
-	
+	@PatchMapping("/{id}/confirm")
+	public ResponseEntity<ApiResponse<OrderResponse>> confirmOrder(
+	        @PathVariable UUID id,
+	        Authentication authentication) {
+
+	    AuthenticatedUser user = currentUser.get(authentication);
+
+	    if (!user.isAdmin()) {
+	        throw new AccessDeniedException(
+	                "Only ADMIN can confirm an order"
+	        );
+	    }
+
+	    OrderResponse order = orderService.confirmOrder(id);
+
+	    ApiResponse<OrderResponse> response =
+	            new ApiResponse<>(
+	                    true,
+	                    "Order confirmed successfully",
+	                    order
+	            );
+
+	    return ResponseEntity.ok(response);
+	}
 	
 
 	
