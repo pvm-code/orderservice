@@ -124,6 +124,30 @@ public class OrderController {
 	    return ResponseEntity.ok(response);
 	}
 	
+	@PatchMapping("/{id}/transit")
+	public ResponseEntity<ApiResponse<OrderResponse>> markInTransit(
+	        @PathVariable UUID id,
+	        Authentication authentication) {
+
+	    AuthenticatedUser user = currentUser.get(authentication);
+
+	    if (!user.isAdmin()) {
+	        throw new AccessDeniedException(
+	                "Only ADMIN can mark an order as IN_TRANSIT"
+	        );
+	    }
+
+	    OrderResponse order = orderService.markInTransit(id);
+
+	    ApiResponse<OrderResponse> response =
+	            new ApiResponse<>(
+	                    true,
+	                    "Order marked as IN_TRANSIT successfully",
+	                    order
+	            );
+
+	    return ResponseEntity.ok(response);
+	}
 
 	
 	@GetMapping("/{id}")

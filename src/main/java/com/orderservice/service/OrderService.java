@@ -187,6 +187,26 @@ public class OrderService {
     }
     
     
+    public OrderResponse markInTransit(UUID id) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + id
+                        ));
+
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new IllegalStateException(
+                    "Only CONFIRMED orders can be marked as IN_TRANSIT"
+            );
+        }
+
+        order.setStatus(OrderStatus.IN_TRANSIT);
+
+        Order savedOrder = orderRepository.save(order);
+
+        return mapToResponse(savedOrder);
+    }
     private OrderResponse mapToResponse(Order order) {
 
         OrderResponse response = new OrderResponse();
