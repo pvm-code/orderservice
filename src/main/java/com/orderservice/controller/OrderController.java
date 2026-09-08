@@ -149,6 +149,30 @@ public class OrderController {
 	    return ResponseEntity.ok(response);
 	}
 
+	@PatchMapping("/{id}/deliver")
+	public ResponseEntity<ApiResponse<OrderResponse>> markDelivered(
+	        @PathVariable UUID id,
+	        Authentication authentication) {
+
+	    AuthenticatedUser user = currentUser.get(authentication);
+
+	    if (!user.isAdmin()) {
+	        throw new AccessDeniedException(
+	                "Only ADMIN can mark an order as DELIVERED"
+	        );
+	    }
+
+	    OrderResponse order = orderService.markDelivered(id);
+
+	    ApiResponse<OrderResponse> response =
+	            new ApiResponse<>(
+	                    true,
+	                    "Order delivered successfully",
+	                    order
+	            );
+
+	    return ResponseEntity.ok(response);
+	}
 	
 	@GetMapping("/{id}")
 	public ResponseEntity<ApiResponse<OrderResponse>> getOrder(

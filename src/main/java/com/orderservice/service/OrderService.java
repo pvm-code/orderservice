@@ -207,6 +207,28 @@ public class OrderService {
 
         return mapToResponse(savedOrder);
     }
+    
+    
+    public OrderResponse markDelivered(UUID id) {
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + id
+                        ));
+
+        if (order.getStatus() != OrderStatus.IN_TRANSIT) {
+            throw new IllegalStateException(
+                    "Only IN_TRANSIT orders can be marked as DELIVERED"
+            );
+        }
+
+        order.setStatus(OrderStatus.COMPLETED);
+
+        Order savedOrder = orderRepository.save(order);
+
+        return mapToResponse(savedOrder);
+    }
     private OrderResponse mapToResponse(Order order) {
 
         OrderResponse response = new OrderResponse();
