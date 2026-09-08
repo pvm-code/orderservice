@@ -19,6 +19,7 @@ import com.orderservice.entity.OrderStatus;
 import com.orderservice.exception.InsufficientStockException;
 import com.orderservice.exception.OrderNotFoundException;
 import com.orderservice.exception.ProductServiceException;
+import com.orderservice.kafka.event.OrderCancelledEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
 import com.orderservice.kafka.producer.OrderEventProducer;
 import com.orderservice.repository.OrderRepository;
@@ -137,7 +138,7 @@ public class OrderService {
     
     
     
-    public OrderResponse cancelOrder(UUID id,UUID userId, boolean isAdmin) {
+    public OrderResponse cancelOrder(UUID id,UUID userId, boolean isAdmin,String email) {
     	
     	
     	Order order =  orderRepository.findById(id).orElseThrow(
@@ -159,6 +160,14 @@ public class OrderService {
     	order.setStatus(OrderStatus.CANCELLED);
     	
     	Order savedOrder = orderRepository.save(order);
+    	OrderCancelledEvent event = new OrderCancelledEvent(
+    	        savedOrder.getId(),
+    	        savedOrder.getUserId(),
+    	        email,
+    	        savedOrder.getTotalAmount()
+    	);
+
+    	orderEventProducer.publishOrderCancelled(event);
     	
     	
     	return mapToResponse(savedOrder);

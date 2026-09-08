@@ -87,7 +87,8 @@ public class OrderController {
 	            orderService.cancelOrder(
 	                    id,
 	                    user.getUserId(),
-	                    user.isAdmin()
+	                    user.isAdmin(),
+	                    user.getEmail()
 	            );
 
 	    ApiResponse<OrderResponse> response =
