@@ -137,6 +137,37 @@ public class OrderService {
     
     
     
+    public OrderResponse cancelOrder(UUID id,UUID userId, boolean isAdmin) {
+    	
+    	
+    	Order order =  orderRepository.findById(id).orElseThrow(
+    			
+    					() -> new OrderNotFoundException("order not found with id:" + id)
+    			
+    			);
+    	
+    	if(!isAdmin && !order.getUserId().equals(userId)) {
+    		
+    		throw new AccessDeniedException("you do not have permission to cancel this order");
+    	}
+    	
+    	
+    	if(order.getStatus() != OrderStatus.PENDING) {
+    		throw new IllegalStateException("only pending order can be cancelled");
+    	}
+    	
+    	order.setStatus(OrderStatus.CANCELLED);
+    	
+    	Order savedOrder = orderRepository.save(order);
+    	
+    	
+    	return mapToResponse(savedOrder);
+    	
+    	
+    }
+    
+    
+    
     private OrderResponse mapToResponse(Order order) {
 
         OrderResponse response = new OrderResponse();
