@@ -20,6 +20,7 @@ import com.orderservice.exception.InsufficientStockException;
 import com.orderservice.exception.OrderNotFoundException;
 import com.orderservice.exception.ProductServiceException;
 import com.orderservice.kafka.event.OrderCancelledEvent;
+import com.orderservice.kafka.event.OrderConfirmedEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
 import com.orderservice.kafka.producer.OrderEventProducer;
 import com.orderservice.repository.OrderRepository;
@@ -48,6 +49,7 @@ public class OrderService {
     	
     	Order order = new Order();
     	order.setUserId(userId);
+    	order.setCustomerEmail(email);
     	order.setStatus(OrderStatus.PENDING);
     	
     	 //order.setOrderItems(new ArrayList<>());
@@ -138,7 +140,7 @@ public class OrderService {
     
     
     
-    public OrderResponse cancelOrder(UUID id,UUID userId, boolean isAdmin,String email) {
+    public OrderResponse cancelOrder(UUID id,UUID userId, boolean isAdmin) {
     	
     	
     	Order order =  orderRepository.findById(id).orElseThrow(
@@ -163,7 +165,7 @@ public class OrderService {
     	OrderCancelledEvent event = new OrderCancelledEvent(
     	        savedOrder.getId(),
     	        savedOrder.getUserId(),
-    	        email,
+    	        savedOrder.getCustomerEmail(),
     	        savedOrder.getTotalAmount()
     	);
 
@@ -189,8 +191,21 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.CONFIRMED);
+        
+        
 
         Order savedOrder = orderRepository.save(order);
+        
+        OrderConfirmedEvent event = new OrderConfirmedEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getCustomerEmail(),
+                savedOrder.getTotalAmount()
+                
+              
+            
+        );
+        orderEventProducer.publishOrderConfirmed(event);
 
         return mapToResponse(savedOrder);
     }

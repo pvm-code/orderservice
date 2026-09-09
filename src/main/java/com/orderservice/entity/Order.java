@@ -29,6 +29,9 @@ public class Order {
 	@Column(name = "user_id", nullable = false)
 	private @NotNull UUID userId;
 	
+	@Column(name = "customer_email", nullable = false)
+	private String customerEmail;
+	
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private OrderStatus status;
@@ -70,6 +73,14 @@ public class Order {
 	
 
 	
+
+	public String getCustomerEmail() {
+		return customerEmail;
+	}
+
+	public void setCustomerEmail(String customerEmail) {
+		this.customerEmail = customerEmail;
+	}
 
 	public @NotNull UUID getUserId() {
 		return userId;

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orderservice.kafka.event.OrderCancelledEvent;
+import com.orderservice.kafka.event.OrderConfirmedEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,31 @@ public class OrderEventProducer {
 	                e
 	        );
 	    }
+	}
+
+	public void publishOrderConfirmed(OrderConfirmedEvent event) {
+
+		    try {
+		        String message = objectMapper.writeValueAsString(event);
+
+		        log.info(
+		                "Publishing OrderConfirmedEvent to Kafka: {}",
+		                message
+		        );
+
+		        kafkaTemplate.send(
+		                "order-confirmed",
+		                event.getOrderId().toString(),
+		                message
+		        );
+
+		    } catch (JsonProcessingException e) {
+		        throw new RuntimeException(
+		                "Failed to serialize OrderConfirmedEvent",
+		                e
+		        );
+		    }
+		
 	}
 
 }
