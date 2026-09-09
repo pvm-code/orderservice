@@ -5,7 +5,9 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.notificationservice.kafka.event.OrderInTransitEvent;
 import com.orderservice.kafka.event.OrderCancelledEvent;
+import com.orderservice.kafka.event.OrderCompletedEvent;
 import com.orderservice.kafka.event.OrderConfirmedEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
 import org.slf4j.Logger;
@@ -99,6 +101,52 @@ public class OrderEventProducer {
 		        );
 		    }
 		
+	}
+
+	public void publishOrderInTransit(OrderInTransitEvent event) {
+		   try {
+		        String message = objectMapper.writeValueAsString(event);
+
+		        log.info(
+		                "Publishing OrderInTransitEvent to Kafka: {}",
+		                message
+		        );
+
+		        kafkaTemplate.send(
+		                "order-intransit",
+		                event.getOrderId().toString(),
+		                message
+		        );
+
+		    } catch (JsonProcessingException e) {
+		        throw new RuntimeException(
+		                "Failed to serialize OrderInTransitEvent",
+		                e
+		        );
+		    }		
+	}
+
+	public void publishOrderConfirmed(OrderCompletedEvent event) {
+		  try {
+		        String message = objectMapper.writeValueAsString(event);
+
+		        log.info(
+		                "Publishing OrderCompletedEvent to Kafka: {}",
+		                message
+		        );
+
+		        kafkaTemplate.send(
+		                "order-completed",
+		                event.getOrderId().toString(),
+		                message
+		        );
+
+		    } catch (JsonProcessingException e) {
+		        throw new RuntimeException(
+		                "Failed to serialize OrderCompletedEvent",
+		                e
+		        );
+		    }		
 	}
 
 }

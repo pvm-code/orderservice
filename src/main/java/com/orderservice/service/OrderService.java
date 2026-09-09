@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import com.notificationservice.kafka.event.OrderInTransitEvent;
 import com.orderservice.client.ProductClient;
 import com.orderservice.dto.client.ProductClientResponse;
 import com.orderservice.dto.client.ProductData;
@@ -20,6 +21,7 @@ import com.orderservice.exception.InsufficientStockException;
 import com.orderservice.exception.OrderNotFoundException;
 import com.orderservice.exception.ProductServiceException;
 import com.orderservice.kafka.event.OrderCancelledEvent;
+import com.orderservice.kafka.event.OrderCompletedEvent;
 import com.orderservice.kafka.event.OrderConfirmedEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
 import com.orderservice.kafka.producer.OrderEventProducer;
@@ -228,6 +230,17 @@ public class OrderService {
         order.setStatus(OrderStatus.IN_TRANSIT);
 
         Order savedOrder = orderRepository.save(order);
+        
+        
+        OrderInTransitEvent event = new OrderInTransitEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getCustomerEmail()
+                
+              
+            
+        );
+        orderEventProducer.publishOrderInTransit(event);
 
         return mapToResponse(savedOrder);
     }
@@ -250,6 +263,17 @@ public class OrderService {
         order.setStatus(OrderStatus.COMPLETED);
 
         Order savedOrder = orderRepository.save(order);
+        
+        OrderCompletedEvent event = new OrderCompletedEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getCustomerEmail()
+              
+                
+              
+            
+        );
+        orderEventProducer.publishOrderConfirmed(event);
 
         return mapToResponse(savedOrder);
     }
