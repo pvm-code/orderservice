@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.notificationservice.kafka.event.OrderInTransitEvent;
 import com.orderservice.client.ProductClient;
@@ -36,17 +37,24 @@ public class OrderService {
     
     private final OrderEventProducer orderEventProducer;
     
+    private final OutboxEventService outboxEventService;
 
     
 
-    public OrderService(OrderRepository orderRepository, ProductClient productClient, OrderEventProducer orderEventProducer) {
+    public OrderService(OrderRepository orderRepository, 
+    		ProductClient productClient, 
+    		OrderEventProducer orderEventProducer,
+    		OutboxEventService outboxEventService) {
+    	
+    	
 		super();
 		this.orderRepository = orderRepository;
 		this.productClient = productClient;
 		this.orderEventProducer = orderEventProducer;
+		this.outboxEventService = outboxEventService;
 	}
 
-    
+    @Transactional
 	public OrderResponse createOrder(CreateOrderRequest request,UUID userId,String email)  {
     	
     	Order order = new Order();
@@ -112,7 +120,12 @@ public class OrderService {
     			email
     			
     			);
-    	orderEventProducer.publishOrderCreated(event);
+   // 	orderEventProducer.publishOrderCreated(event);
+    	outboxEventService.saveEvent(
+    	        "ORDER_CREATED",
+    	        savedOrder.getId(),
+    	        event
+    	);
     	
     	return mapToResponse(savedOrder);
      
@@ -141,7 +154,7 @@ public class OrderService {
     }
     
     
-    
+    @Transactional
     public OrderResponse cancelOrder(UUID id,UUID userId, boolean isAdmin) {
     	
     	
@@ -171,13 +184,19 @@ public class OrderService {
     	        savedOrder.getTotalAmount()
     	);
 
-    	orderEventProducer.publishOrderCancelled(event);
-    	
+    	//orderEventProducer.publishOrderCancelled(event);
+    	outboxEventService.saveEvent(
+    	        "ORDER_CANCELLED",
+    	        savedOrder.getId(),
+    	        event
+    	);
     	
     	return mapToResponse(savedOrder);
     	
     	
     }
+    
+    @Transactional
     public OrderResponse confirmOrder(UUID id) {
 
         Order order = orderRepository.findById(id)
@@ -207,12 +226,17 @@ public class OrderService {
               
             
         );
-        orderEventProducer.publishOrderConfirmed(event);
+     //   orderEventProducer.publishOrderConfirmed(event);
+        outboxEventService.saveEvent(
+                "ORDER_CONFIRMED",
+                savedOrder.getId(),
+                event
+        );
 
         return mapToResponse(savedOrder);
     }
     
-    
+    @Transactional
     public OrderResponse markInTransit(UUID id) {
 
         Order order = orderRepository.findById(id)
@@ -240,12 +264,17 @@ public class OrderService {
               
             
         );
-        orderEventProducer.publishOrderInTransit(event);
+     //   orderEventProducer.publishOrderInTransit(event);
+        outboxEventService.saveEvent(
+                "ORDER_IN_TRANSIT",
+                savedOrder.getId(),
+                event
+        );
 
         return mapToResponse(savedOrder);
     }
     
-    
+    @Transactional
     public OrderResponse markDelivered(UUID id) {
 
         Order order = orderRepository.findById(id)
@@ -273,7 +302,14 @@ public class OrderService {
               
             
         );
-        orderEventProducer.publishOrderConfirmed(event);
+    //    orderEventProducer.publishOrderConfirmed(event);
+        outboxEventService.saveEvent(
+                "ORDER_COMPLETED",
+                savedOrder.getId(),
+                event
+        );
+        
+        
 
         return mapToResponse(savedOrder);
     }

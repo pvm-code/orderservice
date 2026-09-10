@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "outbox_events")
-public class OutBoxEvent {
+public class OutboxEvent {
 	
 	@Id
 	@Column(nullable = false,updatable = false)
