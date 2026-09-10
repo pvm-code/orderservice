@@ -5,11 +5,12 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.notificationservice.kafka.event.OrderInTransitEvent;
 import com.orderservice.kafka.event.OrderCancelledEvent;
 import com.orderservice.kafka.event.OrderCompletedEvent;
 import com.orderservice.kafka.event.OrderConfirmedEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
+import com.orderservice.kafka.event.OrderInTransitEvent;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 @Component
@@ -126,7 +127,7 @@ public class OrderEventProducer {
 		    }		
 	}
 
-	public void publishOrderConfirmed(OrderCompletedEvent event) {
+	public void publishOrderCompleted(OrderCompletedEvent event) {
 		  try {
 		        String message = objectMapper.writeValueAsString(event);
 
