@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -12,80 +14,88 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "outbox_events")
 public class OutboxEvent {
-	
-	@Id
-	@Column(nullable = false,updatable = false)
-	private UUID id=UUID.randomUUID();
 
-	@Column(name = "event_type",nullable = false)
-	private String eventType;
-	
-	@Column(name = "aggregate_id",nullable = false)
-	private UUID aggregateId;
-	
-	@Column(nullable = false,columnDefinition = "TEXT")
-	private String payload;
-	
-	@Column(name="created_at",nullable = false)
-	private LocalDateTime createdAt;
-	
-	@Column(nullable = false)
-	private boolean published = false;
-	
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-	}
-	
-	
+    @Id
+    @Column(nullable = false, updatable = false)
+    private UUID id = UUID.randomUUID();
 
-	public UUID getId() {
-		return id;
-	}
+    @Column(name = "event_type", nullable = false)
+    private String eventType;
 
+    @Column(name = "aggregate_id", nullable = false)
+    private UUID aggregateId;
 
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String payload;
 
-	public String getEventType() {
-		return eventType;
-	}
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
-	public void setEventType(String eventType) {
-		this.eventType = eventType;
-	}
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OutboxStatus status = OutboxStatus.PENDING;
 
-	public UUID getAggregateId() {
-		return aggregateId;
-	}
+    @Column(name = "processing_started_at")
+    private LocalDateTime processingStartedAt;
 
-	public void setAggregateId(UUID aggregateId) {
-		this.aggregateId = aggregateId;
-	}
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
 
-	public String getPayload() {
-		return payload;
-	}
+        if (status == null) {
+            status = OutboxStatus.PENDING;
+        }
+    }
 
-	public void setPayload(String payload) {
-		this.payload = payload;
-	}
+    public UUID getId() {
+        return id;
+    }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public String getEventType() {
+        return eventType;
+    }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
 
-	public boolean isPublished() {
-		return published;
-	}
+    public UUID getAggregateId() {
+        return aggregateId;
+    }
 
-	public void setPublished(boolean published) {
-		this.published = published;
-	}
-	
-	
-	
-	
+    public void setAggregateId(UUID aggregateId) {
+        this.aggregateId = aggregateId;
+    }
+
+    public String getPayload() {
+        return payload;
+    }
+
+    public void setPayload(String payload) {
+        this.payload = payload;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public OutboxStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OutboxStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getProcessingStartedAt() {
+        return processingStartedAt;
+    }
+
+    public void setProcessingStartedAt(LocalDateTime processingStartedAt) {
+        this.processingStartedAt = processingStartedAt;
+    }
 }
