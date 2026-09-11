@@ -7,7 +7,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.notificationservice.kafka.event.OrderInTransitEvent;
 import com.orderservice.client.ProductClient;
 import com.orderservice.dto.client.ProductClientResponse;
 import com.orderservice.dto.client.ProductData;
@@ -25,6 +24,7 @@ import com.orderservice.kafka.event.OrderCancelledEvent;
 import com.orderservice.kafka.event.OrderCompletedEvent;
 import com.orderservice.kafka.event.OrderConfirmedEvent;
 import com.orderservice.kafka.event.OrderCreatedEvent;
+import com.orderservice.kafka.event.OrderInTransitEvent;
 import com.orderservice.kafka.producer.OrderEventProducer;
 import com.orderservice.repository.OrderRepository;
 

@@ -2,12 +2,11 @@ package com.orderservice.kafka.event;
 
 import java.util.UUID;
 
-public class OrderInTransitEvent {
+public class OrderInTransitEvent implements DomainEvent {
 
+    private UUID eventId;
     private UUID orderId;
-
     private UUID userId;
-
     private String email;
 
     public OrderInTransitEvent() {
@@ -17,10 +16,19 @@ public class OrderInTransitEvent {
             UUID orderId,
             UUID userId,
             String email) {
-
         this.orderId = orderId;
         this.userId = userId;
         this.email = email;
+    }
+
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
     }
 
     public UUID getOrderId() {
@@ -45,5 +53,5 @@ public class OrderInTransitEvent {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-}
+    
+}}

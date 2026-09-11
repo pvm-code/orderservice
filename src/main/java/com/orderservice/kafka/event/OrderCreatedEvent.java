@@ -3,61 +3,67 @@ package com.orderservice.kafka.event;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public class OrderCreatedEvent {
-	
-	private UUID orderId;
-	
-	private UUID userId;
-	
-	private BigDecimal totalAmount;
-	
-	private String email;
+public class OrderCreatedEvent implements DomainEvent {
 
-	public OrderCreatedEvent() {
-	
-	}
+    private UUID eventId;
+    private UUID orderId;
+    private UUID userId;
+    private BigDecimal totalAmount;
+    private String email;
 
-	public OrderCreatedEvent(UUID orderId, UUID userId, BigDecimal totalAmount,String email) {
-		super();
-		this.orderId = orderId;
-		this.userId = userId;
-		this.totalAmount = totalAmount;
-		this.email = email;
-	}
+    public OrderCreatedEvent() {
+    }
 
-	public UUID getOrderId() {
-		return orderId;
-	}
+    public OrderCreatedEvent(
+            UUID orderId,
+            UUID userId,
+            BigDecimal totalAmount,
+            String email) {
+        this.orderId = orderId;
+        this.userId = userId;
+        this.totalAmount = totalAmount;
+        this.email = email;
+    }
 
-	public void setOrderId(UUID orderId) {
-		this.orderId = orderId;
-	}
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
 
-	public UUID getUserId() {
-		return userId;
-	}
+    @Override
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
+    }
 
-	public void setUserId(UUID userId) {
-		this.userId = userId;
-	}
+    public UUID getOrderId() {
+        return orderId;
+    }
 
-	public BigDecimal getTotalAmount() {
-		return totalAmount;
-	}
+    public void setOrderId(UUID orderId) {
+        this.orderId = orderId;
+    }
 
-	public void setTotalAmount(BigDecimal totalAmount) {
-		this.totalAmount = totalAmount;
-	}
+    public UUID getUserId() {
+        return userId;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
-	
-	
-	
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
 
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 }

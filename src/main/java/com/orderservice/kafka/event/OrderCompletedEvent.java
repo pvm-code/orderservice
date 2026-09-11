@@ -2,12 +2,11 @@ package com.orderservice.kafka.event;
 
 import java.util.UUID;
 
-public class OrderCompletedEvent {
+public class OrderCompletedEvent implements DomainEvent {
 
+    private UUID eventId;
     private UUID orderId;
-
     private UUID userId;
-
     private String email;
 
     public OrderCompletedEvent() {
@@ -17,10 +16,19 @@ public class OrderCompletedEvent {
             UUID orderId,
             UUID userId,
             String email) {
-
         this.orderId = orderId;
         this.userId = userId;
         this.email = email;
+    }
+
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public void setEventId(UUID eventId) {
+        this.eventId = eventId;
     }
 
     public UUID getOrderId() {

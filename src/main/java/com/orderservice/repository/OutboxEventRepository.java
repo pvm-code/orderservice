@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.orderservice.entity.OutboxEvent;
 import com.orderservice.entity.OutboxStatus;
@@ -27,6 +28,7 @@ public interface OutboxEventRepository
         WHERE e.id = :id
           AND e.status = :pending
     """)
+    @Transactional
     int claimEvent(
             @Param("id") UUID id,
             @Param("pending") OutboxStatus pending,
@@ -42,6 +44,7 @@ public interface OutboxEventRepository
         WHERE e.status = :processing
           AND e.processingStartedAt < :cutoff
     """)
+    @Transactional
     int resetStaleProcessingEvents(
             @Param("processing") OutboxStatus processing,
             @Param("pending") OutboxStatus pending,
