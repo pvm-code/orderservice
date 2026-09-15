@@ -28,4 +28,26 @@ public class ProductClient {
                 .retrieve()
                 .body(ProductClientResponse.class);
     }
+	public void decreaseStock(UUID productId, int quantity) {
+
+	    restClient
+	            .put()
+	            .uri(uriBuilder -> uriBuilder
+	                    .path("/api/v1/products/{id}/stock")
+	                    .queryParam("quantity", quantity)
+	                    .build(productId))
+	            .retrieve()
+	            .toBodilessEntity();
+	}
+	public void increaseStock(UUID productId, int quantity) {
+
+	    restClient
+	            .put()
+	            .uri(uriBuilder -> uriBuilder
+	                    .path("/api/v1/products/{id}/stock/release")
+	                    .queryParam("quantity", quantity)
+	                    .build(productId))
+	            .retrieve()
+	            .toBodilessEntity();
+	}
 }

@@ -53,83 +53,194 @@ public class OrderService {
 		this.orderEventProducer = orderEventProducer;
 		this.outboxEventService = outboxEventService;
 	}
-
     @Transactional
-	public OrderResponse createOrder(CreateOrderRequest request,UUID userId,String email)  {
-    	
-    	Order order = new Order();
-    	order.setUserId(userId);
-    	order.setCustomerEmail(email);
-    	order.setStatus(OrderStatus.PENDING);
-    	
-    	 //order.setOrderItems(new ArrayList<>());
-    	
-    	BigDecimal totalAmount= BigDecimal.ZERO;
-    	
-    	
-    	for(CreateOrderItemRequest itemRequest : request.getItems()) {
-    		
-    		ProductClientResponse productResponse = 
-    				productClient.getProduct(itemRequest.getProductId());
-    		
-    		
-    		if(!productResponse.isSuccess() || productResponse.getData() == null) {
-    			
-    			
-    			throw new ProductServiceException("unable to fetch product:"+itemRequest.getProductId());
-    		}
-    		
-    	ProductData product = productResponse.getData();
-    	
-    	if(itemRequest.getQuantity() > product.getStock()) {
-    		
+    public OrderResponse createOrder(
+            CreateOrderRequest request,
+            UUID userId,
+            String email) {
 
-            throw new InsufficientStockException(
-                    "Insufficient stock for product: "
-                    + product.getName()
-                    + ". Available: "
-                    + product.getStock()
-                    + ", requested: "
-                    + itemRequest.getQuantity()
-            );    	}
-    	
-    	BigDecimal subtotal= product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
-    	
-    	OrderItem orderItem = new OrderItem();
-    	
-    	orderItem.setProductId(product.getId());
-    	orderItem.setProductName(product.getName());
-        orderItem.setQuantity(itemRequest.getQuantity());
-        orderItem.setUnitPrice(product.getPrice());
-        orderItem.setSubtotal(subtotal);
-        
-        order.addOrderItem(orderItem);
-        totalAmount = totalAmount.add(subtotal);
-    	
-     
+        Order order = new Order();
+        order.setUserId(userId);
+        order.setCustomerEmail(email);
+        order.setStatus(OrderStatus.PENDING);
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        // Track successfully reserved products so we can release them
+        // if a later reservation or order creation fails.
+        java.util.List<CreateOrderItemRequest> reservedItems =
+                new java.util.ArrayList<>();
+
+        try {
+
+            for (CreateOrderItemRequest itemRequest : request.getItems()) {
+
+                ProductClientResponse productResponse =
+                        productClient.getProduct(itemRequest.getProductId());
+
+                if (!productResponse.isSuccess()
+                        || productResponse.getData() == null) {
+
+                    throw new ProductServiceException(
+                            "Unable to fetch product: "
+                                    + itemRequest.getProductId()
+                    );
+                }
+
+                ProductData product = productResponse.getData();
+
+                BigDecimal subtotal =
+                        product.getPrice()
+                                .multiply(
+                                        BigDecimal.valueOf(
+                                                itemRequest.getQuantity()
+                                        )
+                                );
+
+                // Atomically reserve stock in Product Service.
+                productClient.decreaseStock(
+                        itemRequest.getProductId(),
+                        itemRequest.getQuantity()
+                );
+
+                reservedItems.add(itemRequest);
+
+                OrderItem orderItem = new OrderItem();
+
+                orderItem.setProductId(product.getId());
+                orderItem.setProductName(product.getName());
+                orderItem.setQuantity(itemRequest.getQuantity());
+                orderItem.setUnitPrice(product.getPrice());
+                orderItem.setSubtotal(subtotal);
+
+                order.addOrderItem(orderItem);
+
+                totalAmount = totalAmount.add(subtotal);
+            }
+
+            order.setTotalAmount(totalAmount);
+
+            Order savedOrder = orderRepository.save(order);
+
+            OrderCreatedEvent event = new OrderCreatedEvent(
+                    savedOrder.getId(),
+                    savedOrder.getUserId(),
+                    savedOrder.getTotalAmount(),
+                    email
+            );
+
+            outboxEventService.saveEvent(
+                    "ORDER_CREATED",
+                    savedOrder.getId(),
+                    event
+            );
+
+            return mapToResponse(savedOrder);
+
+        } catch (RuntimeException ex) {
+
+            // Compensate any stock reservations that succeeded
+            // before the failure occurred.
+            for (CreateOrderItemRequest reservedItem : reservedItems) {
+
+                try {
+                    productClient.increaseStock(
+                            reservedItem.getProductId(),
+                            reservedItem.getQuantity()
+                    );
+                } catch (RuntimeException releaseException) {
+
+                    // Preserve the original failure while making the
+                    // compensation failure visible in the logs.
+                    System.err.println(
+                            "Failed to release stock for product: "
+                                    + reservedItem.getProductId()
+                                    + ". Error: "
+                                    + releaseException.getMessage()
+                    );
+                }
+            }
+
+            throw ex;
+        }
     }
-    	
-    	order.setTotalAmount(totalAmount);
-    	Order savedOrder = orderRepository.save(order);
-    	
-    	OrderCreatedEvent event = new OrderCreatedEvent(
-    			
-    			savedOrder.getId(),
-    			savedOrder.getUserId(),
-    			savedOrder.getTotalAmount(),
-    			email
-    			
-    			);
-   // 	orderEventProducer.publishOrderCreated(event);
-    	outboxEventService.saveEvent(
-    	        "ORDER_CREATED",
-    	        savedOrder.getId(),
-    	        event
-    	);
-    	
-    	return mapToResponse(savedOrder);
-     
-    }
+//
+//    @Transactional
+//	public OrderResponse createOrder(CreateOrderRequest request,UUID userId,String email)  {
+//    	
+//    	Order order = new Order();
+//    	order.setUserId(userId);
+//    	order.setCustomerEmail(email);
+//    	order.setStatus(OrderStatus.PENDING);
+//    	
+//    	 //order.setOrderItems(new ArrayList<>());
+//    	
+//    	BigDecimal totalAmount= BigDecimal.ZERO;
+//    	
+//    	
+//    	for(CreateOrderItemRequest itemRequest : request.getItems()) {
+//    		
+//    		ProductClientResponse productResponse = 
+//    				productClient.getProduct(itemRequest.getProductId());
+//    		
+//    		
+//    		if(!productResponse.isSuccess() || productResponse.getData() == null) {
+//    			
+//    			
+//    			throw new ProductServiceException("unable to fetch product:"+itemRequest.getProductId());
+//    		}
+//    		
+//    	ProductData product = productResponse.getData();
+//    	
+//    	if(itemRequest.getQuantity() > product.getStock()) {
+//    		
+//
+//            throw new InsufficientStockException(
+//                    "Insufficient stock for product: "
+//                    + product.getName()
+//                    + ". Available: "
+//                    + product.getStock()
+//                    + ", requested: "
+//                    + itemRequest.getQuantity()
+//            );    	}
+//    	
+//    	BigDecimal subtotal= product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+//    	
+//    	OrderItem orderItem = new OrderItem();
+//    	
+//    	orderItem.setProductId(product.getId());
+//    	orderItem.setProductName(product.getName());
+//        orderItem.setQuantity(itemRequest.getQuantity());
+//        orderItem.setUnitPrice(product.getPrice());
+//        orderItem.setSubtotal(subtotal);
+//        
+//        order.addOrderItem(orderItem);
+//        totalAmount = totalAmount.add(subtotal);
+//    	
+//     
+//    }
+//    	
+//    	order.setTotalAmount(totalAmount);
+//    	Order savedOrder = orderRepository.save(order);
+//    	
+//    	OrderCreatedEvent event = new OrderCreatedEvent(
+//    			
+//    			savedOrder.getId(),
+//    			savedOrder.getUserId(),
+//    			savedOrder.getTotalAmount(),
+//    			email
+//    			
+//    			);
+//   // 	orderEventProducer.publishOrderCreated(event);
+//    	outboxEventService.saveEvent(
+//    	        "ORDER_CREATED",
+//    	        savedOrder.getId(),
+//    	        event
+//    	);
+//    	
+//    	return mapToResponse(savedOrder);
+//     
+//    }
 
     public OrderResponse getOrder(UUID id,UUID userId,boolean isAdmin) {
 
@@ -173,7 +284,13 @@ public class OrderService {
     	if(order.getStatus() != OrderStatus.PENDING) {
     		throw new IllegalStateException("only pending order can be cancelled");
     	}
-    	
+    	for (OrderItem item : order.getOrderItems()) {
+            productClient.increaseStock(
+                    item.getProductId(),
+                    item.getQuantity()
+            );
+        }
+
     	order.setStatus(OrderStatus.CANCELLED);
     	
     	Order savedOrder = orderRepository.save(order);
@@ -337,7 +454,7 @@ public class OrderService {
 
         OrderItemResponse response = new OrderItemResponse();
 
-        response.setId(item.getUuid());
+        response.setId(item.getId());
         response.setProductId(item.getProductId());
         response.setProductName(item.getProductName());
         response.setQuantity(item.getQuantity());
