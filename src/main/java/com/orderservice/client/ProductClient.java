@@ -6,17 +6,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import com.orderservice.dto.client.ProductClientResponse;
+import com.orderservice.security.ServiceJwtService;
 
 @Component
 public class ProductClient {
 	
 	private final RestClient restClient;
+	
+	private final ServiceJwtService serviceJwtService;
 
-	public ProductClient(RestClient restClient) {
-	
-		this.restClient = restClient;
+	public ProductClient(
+	        RestClient restClient,
+	        ServiceJwtService serviceJwtService) {
+
+	    this.restClient = restClient;
+	    this.serviceJwtService = serviceJwtService;
 	}
-	
 	
 	public ProductClientResponse getProduct(UUID productId) {
 
@@ -30,23 +35,29 @@ public class ProductClient {
     }
 	public void decreaseStock(UUID productId, int quantity) {
 
+	    String token = serviceJwtService.createProductServiceToken();
+
 	    restClient
 	            .put()
 	            .uri(uriBuilder -> uriBuilder
-	                    .path("/api/v1/products/{id}/stock")
+	                    .path("/internal/inventory/{id}/reserve")
 	                    .queryParam("quantity", quantity)
 	                    .build(productId))
+	            .header("Authorization", "Bearer " + token)
 	            .retrieve()
 	            .toBodilessEntity();
 	}
 	public void increaseStock(UUID productId, int quantity) {
 
+	    String token = serviceJwtService.createProductServiceToken();
+
 	    restClient
 	            .put()
 	            .uri(uriBuilder -> uriBuilder
-	                    .path("/api/v1/products/{id}/stock/release")
+	                    .path("/internal/inventory/{id}/release")
 	                    .queryParam("quantity", quantity)
 	                    .build(productId))
+	            .header("Authorization", "Bearer " + token)
 	            .retrieve()
 	            .toBodilessEntity();
 	}
