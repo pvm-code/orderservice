@@ -36,7 +36,7 @@ public class OutboxPublisher {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 10000)
     public void publishPendingEvents() {
 
         resetStaleProcessingEvents();
