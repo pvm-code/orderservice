@@ -39,20 +39,24 @@ public class OrderService {
     
     private final OutboxEventService outboxEventService;
 
+    private final ProcessedEventService processedEventService;
     
 
-    public OrderService(OrderRepository orderRepository, 
-    		ProductClient productClient, 
-    		OrderEventProducer orderEventProducer,
-    		OutboxEventService outboxEventService) {
-    	
-    	
-		super();
-		this.orderRepository = orderRepository;
-		this.productClient = productClient;
-		this.orderEventProducer = orderEventProducer;
-		this.outboxEventService = outboxEventService;
-	}
+    public OrderService(
+            OrderRepository orderRepository,
+            ProductClient productClient,
+            OrderEventProducer orderEventProducer,
+            OutboxEventService outboxEventService,
+            ProcessedEventService processedEventService) {
+
+        super();
+
+        this.orderRepository = orderRepository;
+        this.productClient = productClient;
+        this.orderEventProducer = orderEventProducer;
+        this.outboxEventService = outboxEventService;
+        this.processedEventService = processedEventService;
+    }
     @Transactional
     public OrderResponse createOrder(
             CreateOrderRequest request,
@@ -352,6 +356,59 @@ public class OrderService {
 
         return mapToResponse(savedOrder);
     }
+    @Transactional
+    public OrderResponse confirmOrderFromPayment(
+            UUID orderId,
+            UUID paymentEventId) {
+
+        if (processedEventService.alreadyProcessed(paymentEventId)) {
+
+            return getOrderResponseForProcessedEvent(orderId);
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        ));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING orders can be confirmed"
+            );
+        }
+
+        order.setStatus(OrderStatus.CONFIRMED);
+
+        Order savedOrder = orderRepository.save(order);
+
+        OrderConfirmedEvent event = new OrderConfirmedEvent(
+                savedOrder.getId(),
+                savedOrder.getUserId(),
+                savedOrder.getCustomerEmail(),
+                savedOrder.getTotalAmount()
+        );
+
+        outboxEventService.saveEvent(
+                "ORDER_CONFIRMED",
+                savedOrder.getId(),
+                event
+        );
+
+        boolean marked = processedEventService.markProcessed(
+                paymentEventId,
+                "PAYMENT_SUCCESS"
+        );
+
+        if (!marked) {
+            throw new IllegalStateException(
+                    "Payment event was already processed: "
+                            + paymentEventId
+            );
+        }
+
+        return mapToResponse(savedOrder);
+    }
     
     @Transactional
     public OrderResponse markInTransit(UUID id) {
@@ -462,5 +519,16 @@ public class OrderService {
         response.setSubtotal(item.getSubtotal());
 
         return response;
+    }
+    private OrderResponse getOrderResponseForProcessedEvent(
+            UUID orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        ));
+
+        return mapToResponse(order);
     }
 }
