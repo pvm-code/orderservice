@@ -104,8 +104,8 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain userSecurityFilterChain(
-            HttpSecurity http) throws Exception {
-
+            HttpSecurity http,
+            @Qualifier("jwtDecoder") JwtDecoder jwtDecoder) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
 
