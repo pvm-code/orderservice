@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -59,7 +58,6 @@ public class SecurityConfig {
      * ============================================================
      */
     @Bean
-    @Primary
     @Order(1)
     public SecurityFilterChain internalSecurityFilterChain(
             HttpSecurity http,
@@ -107,7 +105,9 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain userSecurityFilterChain(
             HttpSecurity http,
-            @Qualifier("jwtDecoder") JwtDecoder jwtDecoder) throws Exception {
+            @Qualifier("jwtDecoder")
+            JwtDecoder jwtDecoder) throws Exception {
+
         http
             .csrf(AbstractHttpConfigurer::disable)
 
@@ -141,9 +141,11 @@ public class SecurityConfig {
 
             .oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwt ->
-                    jwt.jwtAuthenticationConverter(
-                        jwtRoleConverter
-                    )
+                    jwt
+                        .decoder(jwtDecoder)
+                        .jwtAuthenticationConverter(
+                            jwtRoleConverter
+                        )
                 )
             );
 
@@ -154,11 +156,11 @@ public class SecurityConfig {
      * ============================================================
      * EXISTING USER JWT DECODER
      *
-     * Do NOT remove this.
+     * User Service JWT
+     * HMAC-SHA256
      * ============================================================
      */
     @Bean
-    @Order(2)
     public JwtDecoder jwtDecoder() {
 
         SecretKey key = Keys.hmacShaKeyFor(
