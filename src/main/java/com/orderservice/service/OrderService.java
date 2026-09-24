@@ -57,6 +57,17 @@ public class OrderService {
         this.outboxEventService = outboxEventService;
         this.processedEventService = processedEventService;
     }
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderForInternalService(UUID orderId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        ));
+
+        return mapToResponse(order);
+    }
     @Transactional
     public OrderResponse createOrder(
             CreateOrderRequest request,
